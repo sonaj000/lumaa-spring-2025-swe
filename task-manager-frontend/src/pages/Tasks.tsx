@@ -42,16 +42,29 @@ const Tasks: React.FC = () => {
         fetchTasks();
     };
 
-    const handleUpdateTask = async (taskId: number) => {
+    const handleUpdateTask = async (task: { 
+        id: number; 
+        title: string; 
+        description: string; 
+        bisComplete: boolean;
+    }) => {
         try {
-            await updateTask(taskId, token!, editTitle, editDescription, false);
-            setEditingTask(null);
-            fetchTasks();
+            // ✅ Ensure `bisComplete` is passed correctly
+            const updatedTask = await updateTask(task.id, token!, task.title, task.description, task.bisComplete);
+
+            setTasks((prevTasks) =>
+                prevTasks.map((t) =>
+                    t.id === task.id
+                        ? { ...t, title: updatedTask.title, description: updatedTask.description, bisComplete: updatedTask.bisComplete }
+                        : t
+                )
+            );
+
+            setEditingTask(null); // ✅ Exit edit mode after saving
         } catch (error) {
             console.error("Error updating task:", error);
         }
     };
-    
 
     const handleDeleteTask = async (taskId: number) => {
         await deleteTask(taskId, token!);
@@ -67,7 +80,7 @@ const Tasks: React.FC = () => {
         try {
             const updatedTask = { ...task, bisComplete: !task.bisComplete };
             await updateTask(task.id, token!, updatedTask.title, updatedTask.description, updatedTask.bisComplete);
-    
+
             setTasks((prevTasks) =>
                 prevTasks.map((t) => (t.id === task.id ? updatedTask : t))
             );
@@ -75,7 +88,7 @@ const Tasks: React.FC = () => {
             console.error("Error toggling task completion:", error);
         }
     };
-    
+
     const startEditing = (task: any) => {
         setEditingTask(task.id);
         setEditTitle(task.title);
@@ -114,7 +127,12 @@ const Tasks: React.FC = () => {
                                     value={editDescription}
                                     onChange={(e) => setEditDescription(e.target.value)}
                                 />
-                                <button onClick={() => handleUpdateTask(task.id)}>Save</button>
+                                <button onClick={() => handleUpdateTask({ 
+                                    id: task.id, 
+                                    title: editTitle, 
+                                    description: editDescription, 
+                                    bisComplete: task.bisComplete
+                                })}>Save</button>
                                 <button onClick={() => setEditingTask(null)}>Cancel</button>
                             </div>
                         ) : (
@@ -136,6 +154,7 @@ const Tasks: React.FC = () => {
 };
 
 export default Tasks;
+
 
 
 

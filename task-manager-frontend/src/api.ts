@@ -24,25 +24,27 @@ export const createTask = async (title: string, description: string, token: stri
 };
 
 export const updateTask = async (
-    taskId: number, 
-    token: string, 
-    title?: string, 
-    description?: string, 
-    bisComplete?: boolean
+    taskId: number,
+    token: string,
+    title: string,
+    description: string,
+    bisComplete: boolean
 ) => {
-    try {
-        await axios.put(`${API_URL}/tasks/${taskId}`, {
-            title: title ?? undefined,
-            description: description ?? undefined,
-            bisComplete: bisComplete, // ✅ Ensure boolean value is sent
-        }, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-    } catch (error) {
-        console.error("Error updating task:", error);
-    }
-};
+    const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, description, bisComplete }),
+    });
 
+    if (!response.ok) {
+        throw new Error("Failed to update task");
+    }
+
+    return await response.json(); // ✅ Ensure full updated task is returned
+};
 
 
 export const deleteTask = async (taskId: number, token: string) => {
