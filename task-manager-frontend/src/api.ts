@@ -23,11 +23,27 @@ export const createTask = async (title: string, description: string, token: stri
     });
 };
 
-export const updateTask = async (taskId: number, title: string, description: string, bisComplete: boolean, token: string) => {
-    return axios.put(`${API_URL}/tasks/${taskId}`, { title, description, bisComplete }, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
+export const updateTask = async (
+    taskId: number, 
+    token: string, 
+    title?: string, 
+    description?: string, 
+    bisComplete?: boolean
+) => {
+    try {
+        await axios.put(`${API_URL}/tasks/${taskId}`, {
+            title: title ?? undefined,
+            description: description ?? undefined,
+            bisComplete: bisComplete, // ✅ Ensure boolean value is sent
+        }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    } catch (error) {
+        console.error("Error updating task:", error);
+    }
 };
+
+
 
 export const deleteTask = async (taskId: number, token: string) => {
     return axios.delete(`${API_URL}/tasks/${taskId}`, {

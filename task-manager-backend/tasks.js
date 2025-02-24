@@ -1,6 +1,6 @@
 const express = require('express');
 const { Pool } = require('pg');
-const authenticateToken = require('./authentication'); // Protect routes
+const authenticateToken = require('./authentication');
 
 require('dotenv').config();
 
@@ -9,31 +9,28 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
 });
 
-// GET all tasks for the authenticated user
+// 🔹 Get all tasks for the authenticated user
 router.get('/', authenticateToken, async (req, res) => {
-    console.log("Debug: userID from JWT:", req.userID);
     const userID = req.userID;
 
     try {
         const tasks = await pool.query('SELECT * FROM tasks WHERE userID = $1', [userID]);
-
-        console.log("Tasks Retrieved:", tasks.rows);
         res.json(tasks.rows);
     } catch (err) {
-        console.error("Error retrieving tasks:", err);
+        console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// POST a new task
+// 🔹 Create a new task
 router.post('/', authenticateToken, async (req, res) => {
     const { title, description } = req.body;
     const userID = req.userID;
 
     try {
         const newTask = await pool.query(
-            'INSERT INTO tasks (title, description, userID) VALUES ($1, $2, $3) RETURNING *',
-            [title, description, userID]
+            'INSERT INTO tasks (title, description, bisComplete, userID) VALUES ($1, $2, $3, $4) RETURNING *',
+            [title, description, false, userID]
         );
         res.status(201).json(newTask.rows[0]);
     } catch (err) {
@@ -42,7 +39,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-// UPDATE a task
+// 🔹 Update a task (mark complete, edit text)
 router.put('/:id', authenticateToken, async (req, res) => {
     const { title, description, bisComplete } = req.body;
     const taskID = req.params.id;
@@ -64,26 +61,26 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// DELETE a task
+// 🔹 Delete a task
 router.delete('/:id', authenticateToken, async (req, res) => {
     const taskID = req.params.id;
     const userID = req.userID;
 
     try {
         const deletedTask = await pool.query(
-            'DELETE FROM tasks WHERE id = $1 AND userID = $2 RETURNING *', [taskID, userID]
+            'DELETE FROM tasks WHERE id = $1 AND userID = $2 RETURNING *',
+            [taskID, userID]
         );
+
         if (deletedTask.rows.length === 0) {
             return res.status(404).json({ error: 'Task not found' });
         }
         res.json({ message: 'Task deleted successfully' });
-    } catch (error) {
-        console.error(error);
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
 module.exports = router;
-
-
 
